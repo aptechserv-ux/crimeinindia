@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP Crime Analysis — NCRB 2024 | Full Sub-Category Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --teal:#1D9E75;--teal-lt:#E1F5EE;--teal-md:#5DCAA5;--teal-dk:#085041;
+  --red:#D85A30;--red-lt:#FAECE7;--red-md:#F0997B;--red-dk:#4A1B0C;
+  --blue:#378ADD;--blue-lt:#E6F1FB;--blue-dk:#042C53;
+  --amber:#BA7517;--amber-lt:#FAEEDA;--amber-dk:#412402;
+  --purple:#534AB7;--purple-lt:#EEEDFE;
+  --gray-bg:#F3F2EE;--gray-card:#FFFFFF;--gray-sec:#F0EFE9;
+  --gray-bdr:rgba(0,0,0,0.09);--gray-bdr2:rgba(0,0,0,0.16);
+  --text-pri:#18181A;--text-sec:#555450;--text-hint:#888780;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-bg);color:var(--text-pri);font-size:13px;line-height:1.5}
+
+/* ── HEADER ── */
+.top-bar{background:#0C2218;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200;border-bottom:2px solid var(--teal)}
+.top-bar h1{font-size:14px;font-weight:600;display:flex;align-items:center;gap:9px}
+.logo{width:26px;height:26px;background:var(--teal);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.top-meta{font-size:10px;color:rgba(255,255,255,0.5);display:flex;gap:16px}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1260px;margin:0 auto;padding:20px 16px 60px}
+
+/* ── PAGE TITLE ── */
+.page-title{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--gray-bdr2)}
+.page-title h2{font-size:20px;font-weight:700;margin-bottom:3px}
+.page-title p{font-size:11px;color:var(--text-sec)}
+.badge-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:12px;text-transform:uppercase;letter-spacing:0.04em}
+.bg-teal{background:var(--teal-lt);color:var(--teal-dk)}
+.bg-blue{background:var(--blue-lt);color:var(--blue-dk)}
+.bg-amber{background:var(--amber-lt);color:var(--amber-dk)}
+.bg-red{background:var(--red-lt);color:var(--red-dk)}
+.bg-gray{background:var(--gray-sec);color:var(--text-sec)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:18px}
+.kpi{background:var(--gray-card);border:0.5px solid var(--gray-bdr);border-radius:var(--radius-lg);padding:12px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--kpi-c,var(--teal))}
+.kpi.warn::before{background:var(--red)}
+.kpi.info::before{background:var(--blue)}
+.kpi.amber::before{background:var(--amber)}
+.kpi-label{font-size:9.5px;font-weight:700;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+.kpi-val{font-size:24px;font-weight:700;line-height:1;color:var(--text-pri)}
+.kpi-sub{font-size:10px;margin-top:5px;display:flex;align-items:center;gap:2px}
+.good{color:var(--teal)}.bad{color:var(--red)}.neu{color:var(--text-hint)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-bdr);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 15px;font-size:11.5px;font-weight:500;color:var(--text-sec);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all 0.15s;user-select:none}
+.tab:hover{color:var(--text-pri)}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:700}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.full{grid-column:1/-1}
+@media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+
+/* ── CARDS ── */
+.card{background:var(--gray-card);border:0.5px solid var(--gray-bdr);border-radius:var(--radius-lg);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:12px}
+.card-title{font-size:10.5px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;display:flex;align-items:center;gap:5px}
+.card-title .dot{width:8px;height:8px;border-radius:2px;background:var(--teal);flex-shrink:0}
+.card-title .dot.red{background:var(--red)}
+.card-title .dot.amber{background:var(--amber)}
+.sec-hd{font-size:10px;font-weight:700;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;padding-bottom:5px;border-bottom:0.5px solid var(--gray-bdr);display:flex;align-items:center;gap:6px}
+.sec-hd::before{content:'';display:block;width:2.5px;height:12px;background:var(--teal);border-radius:1px}
+
+/* ── HBAR ── */
+.hbar-wrap{display:flex;flex-direction:column;gap:5px}
+.hbar-row{display:flex;align-items:center;gap:6px}
+.hbar-label{width:95px;text-align:right;flex-shrink:0;font-size:10.5px;color:var(--text-sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar-label.ap{color:var(--teal);font-weight:700}
+.hbar-label.nat{color:var(--red);font-weight:600}
+.hbar-track{flex:1;background:var(--gray-sec);border-radius:3px;height:14px;position:relative;overflow:visible;min-width:0}
+.hbar-fill{height:100%;border-radius:3px;transition:width 0.5s ease}
+.hbar-val{width:52px;font-size:10.5px;font-weight:600;color:var(--text-pri);flex-shrink:0;text-align:right}
+.nat-line{position:absolute;top:-3px;bottom:-3px;width:1.5px;background:var(--red);z-index:4;border-radius:1px;opacity:0.7}
+
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-sec)}
+.leg-sq{width:9px;height:9px;border-radius:1.5px;flex-shrink:0}
+.leg-ln{width:12px;height:1.5px;flex-shrink:0;border-radius:1px}
+
+/* ── BIG DATA TABLE ── */
+.dt{width:100%;border-collapse:collapse;font-size:11px}
+.dt thead th{font-size:9px;font-weight:700;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.05em;padding:5px 8px;border-bottom:1px solid var(--gray-bdr2);background:var(--gray-sec);text-align:left}
+.dt thead th:not(:first-child){text-align:right}
+.dt td{padding:5px 8px;border-bottom:0.5px solid var(--gray-bdr)}
+.dt td:not(:first-child){text-align:right}
+.dt tbody tr:last-child td{border-bottom:none}
+.dt tbody tr:hover{background:var(--gray-sec)}
+.dt .ap-row{background:#EBF8F4}
+.dt .ap-row td{font-weight:600;color:var(--teal-dk)}
+.pill{display:inline-block;font-size:9px;font-weight:700;padding:1.5px 6px;border-radius:10px;text-transform:uppercase}
+.p-good{background:var(--teal-lt);color:var(--teal-dk)}
+.p-bad{background:var(--red-lt);color:var(--red-dk)}
+.p-warn{background:var(--amber-lt);color:var(--amber-dk)}
+.p-neu{background:var(--gray-sec);color:var(--text-sec)}
+
+/* ── INSIGHT / CONCERN ── */
+.insight,.concern{padding:10px 14px;margin-bottom:10px;font-size:12px;line-height:1.65;border-radius:0 var(--radius-md) var(--radius-md) 0}
+.insight{background:var(--blue-lt);border-left:3px solid var(--blue)}
+.concern{background:var(--red-lt);border-left:3px solid var(--red)}
+.caution{background:var(--amber-lt);border-left:3px solid var(--amber)}
+.insight strong,.concern strong,.caution strong{display:block;font-weight:700;margin-bottom:3px}
+
+/* ── STAT SUMMARY MINI ── */
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:12px}
+.mini{background:var(--gray-sec);border-radius:var(--radius-md);padding:9px 12px}
+.mini-lbl{font-size:9px;color:var(--text-hint);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px}
+.mini-val{font-size:18px;font-weight:700;line-height:1}
+.mini-sub{font-size:9.5px;margin-top:3px}
+
+/* ── CHART WRAP ── */
+.cw{position:relative;width:100%}
+
+/* ── COLOR REFERENCE ── */
+.c-teal{background:#1D9E75}.c-teal2{background:#5DCAA5}.c-red{background:#D85A30}.c-red2{background:#F0997B}.c-blue{background:#378ADD}.c-amber{background:#BA7517}.c-purple{background:#534AB7}
+
+/* ── FOOTER ── */
+.footer{text-align:center;font-size:10px;color:var(--text-hint);margin-top:40px;padding-top:14px;border-top:0.5px solid var(--gray-bdr)}
+
+/* ── PRINT ── */
+@media print{.top-bar{position:relative}.tabs,.tab-panel{display:block!important}.tabs{border:none}}
+</style>
+</head>
+<body>
+
+<header class="top-bar">
+  <h1><span class="logo">AP</span> Andhra Pradesh · Crime Analysis Dashboard · NCRB 2024 · All Sub-Categories</h1>
+  <div class="top-meta">
+    <span>Population: 534 lakh</span>
+    <span>Source: Crime in India 2024, NCRB/MHA</span>
+    <span>Rate = per lakh population</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="page-title">
+    <h2>AP vis-à-vis National Average &amp; Better Performing States — Comprehensive Sub-Category Analysis</h2>
+    <p>All crime heads under IPC/BNS, SLL (Volumes I–III) — Table 1A.4 &amp; associated chapters. Prepared for AP State Police / Policy Review 2024–25.</p>
+    <div class="badge-row">
+      <span class="badge bg-teal">✓ 15 states have lower IPC rate than AP</span>
+      <span class="badge bg-blue">Table 1A.4 | 79 sub-categories extracted</span>
+      <span class="badge bg-amber">⚠ 6 sub-categories above national avg</span>
+      <span class="badge bg-gray">Ref: NCRB Crime in India 2024 Vol I–III</span>
+    </div>
+  </div>
+
+  <!-- ── KPI STRIP ── -->
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">IPC/BNS Rate</div><div class="kpi-val">98.7</div><div class="kpi-sub good">↓ 41.7% vs national 169.4</div></div>
+    <div class="kpi"><div class="kpi-label">Combined Rate</div><div class="kpi-val">316.1</div><div class="kpi-sub good">↓ 22.3% vs national 406.8</div></div>
+    <div class="kpi"><div class="kpi-label">Chargesheeting %</div><div class="kpi-val">90.7%</div><div class="kpi-sub good">↑ 10.4 pts above national 80.3%</div></div>
+    <div class="kpi warn"><div class="kpi-label">Cruelty by Husband</div><div class="kpi-val">17,480</div><div class="kpi-sub bad">Rate 41.8 ↑ vs national 12.2</div></div>
+    <div class="kpi warn"><div class="kpi-label">Acid Attacks</div><div class="kpi-val">3,111</div><div class="kpi-sub bad">Rate 5.8 ↑ vs national 1.2</div></div>
+    <div class="kpi warn"><div class="kpi-label">Voyeurism/Disrobe</div><div class="kpi-val">3,933</div><div class="kpi-sub bad">Rate 3.7/11.1 above national</div></div>
+    <div class="kpi"><div class="kpi-label">Rape Rate</div><div class="kpi-val">1.7</div><div class="kpi-sub good">↓ 60% below national 4.3</div></div>
+    <div class="kpi"><div class="kpi-label">Murder Rate</div><div class="kpi-val">1.68</div><div class="kpi-sub good">↓ below national ~2.07</div></div>
+    <div class="kpi"><div class="kpi-label">Kidnapping Rate</div><div class="kpi-val">0.9</div><div class="kpi-sub good">↓ well below national 6.8</div></div>
+    <div class="kpi info"><div class="kpi-label">MV Act Rate</div><div class="kpi-val">87.5</div><div class="kpi-sub bad">Above national 71.2</div></div>
+    <div class="kpi"><div class="kpi-label">Cybercrime Rate</div><div class="kpi-val">4.7</div><div class="kpi-sub good">↓ below national 7.3</div></div>
+    <div class="kpi"><div class="kpi-label">IPC Cases 2024</div><div class="kpi-val">52,712</div><div class="kpi-sub bad">↑ 73.2% (BNS transition surge)</div></div>
+  </div>
+
+  <!-- ── TABS ── -->
+  <div class="tabs">
+    <div class="tab active" onclick="T('overview')">📊 Summary</div>
+    <div class="tab" onclick="T('women')">♀ Crimes Against Women</div>
+    <div class="tab" onclick="T('violent')">⚔ Violent Crimes</div>
+    <div class="tab" onclick="T('property')">🏠 Property Crimes</div>
+    <div class="tab" onclick="T('economic')">💼 Economic &amp; Cyber</div>
+    <div class="tab" onclick="T('vulnerable')">🛡 Vulnerable Groups</div>
+    <div class="tab" onclick="T('sll')">📋 Special &amp; Local Laws</div>
+    <div class="tab" onclick="T('ranking')">🏆 State Rankings</div>
+    <div class="tab" onclick="T('findings')">💡 Key Findings</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 1 — SUMMARY OVERVIEW
+       ══════════════════════════════════════════════════════════ -->
+  <div id="overview" class="tab-panel active">
+    <div class="sec-hd">AP crime profile at a glance — all major parameters vs national average (2024)</div>
+
+    <!-- Radar -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Radar — AP vs national (normalised, higher = better)</div>
+        <div class="cw" style="height:300px"><canvas id="radar1" role="img" aria-label="Radar chart AP vs national.">AP outperforms national on most parameters.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>IPC/BNS rate — AP vs all states (lower = better)</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better than AP</span><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse than AP</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>National avg</span></div>
+        <div class="hbar-wrap" id="ipc-all"></div>
+      </div>
+    </div>
+
+    <!-- Summary table -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Complete crime parameter matrix — AP vs national average 2024</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Category</th><th>AP Cases</th><th>AP Rate</th><th>Nat Avg Rate</th><th>Comparison</th><th>Status</th></tr></thead>
+          <tbody id="summary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Trend chart -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>AP IPC/BNS cases — 3-year trend (2022–2024)</div>
+      <div class="cw" style="height:180px"><canvas id="trend1" role="img" aria-label="AP trend 2022 36737, 2023 30426, 2024 52712.">AP IPC: 2022=36737, 2023=30426, 2024=52712.</canvas></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 2 — CRIMES AGAINST WOMEN
+       ══════════════════════════════════════════════════════════ -->
+  <div id="women" class="tab-panel">
+    <div class="sec-hd">All sub-categories — crimes against women (Table 3A / 1A.4) — 2024</div>
+
+    <div class="concern"><strong>Critical concern — voyeurism, disrobing &amp; cruelty by husband significantly above national average</strong>AP's voyeurism rate (3.7 vs national 1.5), disrobing rate (11.1 vs national 1.3), insult to modesty (34.3 vs 17.3), acid attack rate (5.8 vs 1.2), and cruelty by husband rate (41.8 vs 12.2) are all markedly above national average and require targeted intervention.</div>
+
+    <div class="mini-grid">
+      <div class="mini"><div class="mini-lbl">Rape</div><div class="mini-val" style="color:var(--teal)">441</div><div class="mini-sub good">Rate 1.7 ✓ (Nat: 4.3)</div></div>
+      <div class="mini"><div class="mini-lbl">Cruelty by Husband</div><div class="mini-val" style="color:var(--red)">17,480</div><div class="mini-sub bad">Rate 41.8 ✗ (Nat: 12.2)</div></div>
+      <div class="mini"><div class="mini-lbl">Insult to Modesty</div><div class="mini-val" style="color:var(--red)">9,165</div><div class="mini-sub bad">Rate 34.3 ✗ (Nat: 17.3)</div></div>
+      <div class="mini"><div class="mini-lbl">Acid Attacks</div><div class="mini-val" style="color:var(--red)">3,111</div><div class="mini-sub bad">Rate 5.8 ✗ (Nat: 1.2)</div></div>
+      <div class="mini"><div class="mini-lbl">Disrobing</div><div class="mini-val" style="color:var(--red)">2,956</div><div class="mini-sub bad">Rate 11.1 ✗ (Nat: 1.3)</div></div>
+      <div class="mini"><div class="mini-lbl">Dowry Deaths</div><div class="mini-val">72</div><div class="mini-sub good">Rate 0.2 ✓ (Nat: 0.7)</div></div>
+      <div class="mini"><div class="mini-lbl">Voyeurism</div><div class="mini-val" style="color:var(--red)">977</div><div class="mini-sub bad">Rate 3.7 ✗ (Nat: 1.5)</div></div>
+      <div class="mini"><div class="mini-lbl">Stalking</div><div class="mini-val" style="color:var(--teal)">72</div><div class="mini-sub good">Rate 0.3 ✓ (Nat: 0.8)</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot red"></span>Categories above national average (rate /lakh)</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP rate</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>National avg</span></div>
+        <div class="hbar-wrap" id="women-bad"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Categories below national average (rate /lakh)</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP rate</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>National avg</span></div>
+        <div class="hbar-wrap" id="women-good"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Complete sub-category table — crimes against women (AP vs national avg) 2024</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Sub-Category (BNS/IPC Section)</th><th>AP Cases</th><th>AP Rate</th><th>National Rate</th><th>AP vs National</th><th>Status</th></tr></thead>
+          <tbody id="women-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Rape rate comparison chart -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Rape rate /lakh — AP vs comparable states 2024</div>
+      <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better than AP</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse than AP</span></div>
+      <div class="hbar-wrap" id="rape-states"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 3 — VIOLENT CRIMES
+       ══════════════════════════════════════════════════════════ -->
+  <div id="violent" class="tab-panel">
+    <div class="sec-hd">All violent crime sub-categories — offences affecting human body (2024)</div>
+
+    <div class="insight"><strong>AP performs well on most violent crime parameters below national average</strong>Murder (1.7 vs 2.07), Attempt to Murder (2.9 vs 4.2), Kidnapping (0.9 vs 6.8), Robbery (0.5 vs ~1.5), and Dacoity (0.1) are all significantly below national average. Total violent crime rate (51.4 vs 52.9) is marginally better.</div>
+
+    <div class="mini-grid">
+      <div class="mini"><div class="mini-lbl">Murder</div><div class="mini-val" style="color:var(--teal)">898</div><div class="mini-sub good">Rate 1.7 ✓ (Nat: 2.07)</div></div>
+      <div class="mini"><div class="mini-lbl">Attempt to Murder</div><div class="mini-val" style="color:var(--teal)">1,523</div><div class="mini-sub good">Rate 2.9 ✓ (Nat: 4.2)</div></div>
+      <div class="mini"><div class="mini-lbl">Culpable Homicide</div><div class="mini-val" style="color:var(--teal)">117</div><div class="mini-sub good">Rate 0.2 ✓</div></div>
+      <div class="mini"><div class="mini-lbl">Total Hurt Cases</div><div class="mini-val">22,577</div><div class="mini-sub">Rate 42.3 (Nat: 31.5)</div></div>
+      <div class="mini"><div class="mini-lbl">Acid Attack</div><div class="mini-val" style="color:var(--red)">3,111</div><div class="mini-sub bad">Rate 5.8 ✗ (Nat: 1.2)</div></div>
+      <div class="mini"><div class="mini-lbl">Kidnapping</div><div class="mini-val" style="color:var(--teal)">468</div><div class="mini-sub good">Rate 0.9 ✓ (Nat: 6.8)</div></div>
+      <div class="mini"><div class="mini-lbl">Robbery</div><div class="mini-val" style="color:var(--teal)">244</div><div class="mini-sub good">Rate 0.5 ✓</div></div>
+      <div class="mini"><div class="mini-lbl">Dacoity</div><div class="mini-val" style="color:var(--teal)">33</div><div class="mini-sub good">Rate 0.1 ✓</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot red"></span>Violent crime breakdown — AP 2024 (all cases)</div>
+        <div class="cw" style="height:280px"><canvas id="vc-pie" role="img" aria-label="AP violent crime breakdown chart.">Violent crimes breakdown in AP.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Murder rate /lakh — AP vs comparator states</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>Nat avg</span></div>
+        <div class="hbar-wrap" id="murder-st"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Complete sub-category table — violent crimes AP vs national 2024</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Sub-Category (BNS/IPC Section)</th><th>AP Cases</th><th>AP Rate</th><th>National Rate</th><th>AP vs National</th><th>Status</th></tr></thead>
+          <tbody id="violent-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Attempt to murder rate /lakh — selected states</div>
+      <div class="hbar-wrap" id="atm-states"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 4 — PROPERTY CRIMES
+       ══════════════════════════════════════════════════════════ -->
+  <div id="property" class="tab-panel">
+    <div class="sec-hd">Property crime sub-categories — theft, burglary, robbery, dacoity, cheating &amp; fraud (2024)</div>
+
+    <div class="insight"><strong>AP performs better than national on most property crime parameters</strong>Robbery rate (0.5) and Dacoity rate (0.1) are very low. Theft (22.5) and Burglary are moderate. Wrongful Restraint (S.126-127 BNS) at 67.6 per lakh is a new category under BNS transition responsible for a significant portion of case increase in 2024.</div>
+
+    <div class="mini-grid">
+      <div class="mini"><div class="mini-lbl">Theft Total</div><div class="mini-val">12,022</div><div class="mini-sub">Rate 22.5/lakh</div></div>
+      <div class="mini"><div class="mini-lbl">Night Burglary</div><div class="mini-val">18,283</div><div class="mini-sub bad">Rate 34.2/lakh</div></div>
+      <div class="mini"><div class="mini-lbl">Day Burglary</div><div class="mini-val">3,231</div><div class="mini-sub">Rate 6.1/lakh</div></div>
+      <div class="mini"><div class="mini-lbl">Robbery</div><div class="mini-val" style="color:var(--teal)">244</div><div class="mini-sub good">Rate 0.5 ✓</div></div>
+      <div class="mini"><div class="mini-lbl">Dacoity</div><div class="mini-val" style="color:var(--teal)">33</div><div class="mini-sub good">Rate 0.1 ✓</div></div>
+      <div class="mini"><div class="mini-lbl">Snatching</div><div class="mini-val">424</div><div class="mini-sub">Rate 0.8/lakh</div></div>
+      <div class="mini"><div class="mini-lbl">Wrongful Restraint</div><div class="mini-val" style="color:var(--amber)">36,093</div><div class="mini-sub neu">Rate 67.6 (New BNS)</div></div>
+      <div class="mini"><div class="mini-lbl">Criminal Misapp.</div><div class="mini-val">953</div><div class="mini-sub">Rate 1.8/lakh</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot amber"></span>Property crime rates /lakh — AP vs national average</div>
+        <div class="hbar-wrap" id="prop-cmp"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Robbery rate /lakh — AP vs key states</div>
+        <div class="hbar-wrap" id="robbery-st"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Complete property crime sub-category table — AP vs national 2024</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Sub-Category</th><th>AP Cases</th><th>AP Rate</th><th>National Rate</th><th>AP vs National</th><th>Status</th></tr></thead>
+          <tbody id="property-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 5 — ECONOMIC & CYBER
+       ══════════════════════════════════════════════════════════ -->
+  <div id="economic" class="tab-panel">
+    <div class="sec-hd">Economic offences, cybercrime &amp; corruption — sub-categories (2024)</div>
+
+    <div class="caution"><strong>Cybercrime detection capacity — area for improvement despite lower rate</strong>AP's cybercrime rate (4.7 vs national 7.3) appears better than national but chargesheeting rate for cybercrime is only 28.6% (national 31.9%), indicating investigation quality needs improvement. States like Karnataka (21,437 cases) reveal that higher detection sophistication leads to more registration.</div>
+
+    <div class="mini-grid">
+      <div class="mini"><div class="mini-lbl">Economic Offences</div><div class="mini-val">7,170</div><div class="mini-sub good">Rate 13.4 ✓ (Nat: 15.3)</div></div>
+      <div class="mini"><div class="mini-lbl">FCF (Forgery, Cheating, Fraud)</div><div class="mini-val">6,202</div><div class="mini-sub">Rate 11.6/lakh</div></div>
+      <div class="mini"><div class="mini-lbl">Criminal Breach of Trust</div><div class="mini-val">953</div><div class="mini-sub">Rate 1.8/lakh</div></div>
+      <div class="mini"><div class="mini-lbl">Total Cybercrime</div><div class="mini-val" style="color:var(--teal)">2,528</div><div class="mini-sub good">Rate 4.7 ✓ (Nat: 7.3)</div></div>
+      <div class="mini"><div class="mini-lbl">Cyber CSR</div><div class="mini-val" style="color:var(--red)">28.6%</div><div class="mini-sub bad">Below national 31.9%</div></div>
+      <div class="mini"><div class="mini-lbl">Prevention of Corruption</div><div class="mini-val" style="color:var(--teal)">139</div><div class="mini-sub good">Rate 0.3 ✓, CSR 99.4%</div></div>
+      <div class="mini"><div class="mini-lbl">Eco. Off. CSR</div><div class="mini-val">70.6%</div><div class="mini-sub">Below national 53.3%</div></div>
+      <div class="mini"><div class="mini-lbl">Harboring Offenders</div><div class="mini-val">13,958</div><div class="mini-sub">Rate 26.1/lakh</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Cybercrime rate /lakh — AP vs key states 2024</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>Nat avg</span></div>
+        <div class="hbar-wrap" id="cyber-st"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot amber"></span>Economic offences composition — AP 2024</div>
+        <div class="cw" style="height:220px"><canvas id="eco-pie" role="img" aria-label="Economic offences breakdown AP.">Economic offences breakdown.</canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Economic &amp; cybercrime sub-category table — AP vs national 2024</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Sub-Category</th><th>AP Cases</th><th>AP Rate</th><th>National Rate</th><th>AP vs National</th><th>Status</th></tr></thead>
+          <tbody id="eco-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 6 — VULNERABLE GROUPS
+       ══════════════════════════════════════════════════════════ -->
+  <div id="vulnerable" class="tab-panel">
+    <div class="sec-hd">Crimes against SC/ST, senior citizens, children &amp; juveniles (Vol II chapters)</div>
+
+    <div class="mini-grid">
+      <div class="mini"><div class="mini-lbl">SC Atrocities</div><div class="mini-val" style="color:var(--amber)">1,765</div><div class="mini-sub">Rate 20.9 (Nat: 24.7)</div></div>
+      <div class="mini"><div class="mini-lbl">ST Atrocities</div><div class="mini-val" style="color:var(--teal)">653</div><div class="mini-sub good">Rate 12.4 ✓ (Nat: 16.3)</div></div>
+      <div class="mini"><div class="mini-lbl">Senior Citizens</div><div class="mini-val">2,090</div><div class="mini-sub">Rate 48.3/lakh elderly</div></div>
+      <div class="mini"><div class="mini-lbl">SC Crime — Murder</div><div class="mini-val">83</div><div class="mini-sub">Rate 1.0/lakh SC pop</div></div>
+      <div class="mini"><div class="mini-lbl">SC Crime — Rape</div><div class="mini-val">78</div><div class="mini-sub">Rate 0.9/lakh SC pop</div></div>
+      <div class="mini"><div class="mini-lbl">Juveniles (ICL)</div><div class="mini-val" style="color:var(--teal)">912</div><div class="mini-sub good">Rate 4.8 ✓ (Nat: 7.9)</div></div>
+      <div class="mini"><div class="mini-lbl">Human Trafficking</div><div class="mini-val" style="color:var(--teal)">159</div><div class="mini-sub good">Rate 0.3, CSR 100% ✓</div></div>
+      <div class="mini"><div class="mini-lbl">SC Crime — Gr. Hurt</div><div class="mini-val">188</div><div class="mini-sub">Rate 2.2</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot amber"></span>SC atrocity rate /lakh SC population — state comparison</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better than AP</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse than AP</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>National</span></div>
+        <div class="hbar-wrap" id="sc-st"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Juveniles in conflict with law — rate /lakh juvenile pop</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse</span></div>
+        <div class="hbar-wrap" id="juv-st"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Vulnerable groups crime sub-category table — AP vs national 2024</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Sub-Category / Group</th><th>AP Cases</th><th>AP Rate</th><th>National Rate</th><th>AP vs National</th><th>Status</th></tr></thead>
+          <tbody id="vuln-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 7 — SLL (SPECIAL & LOCAL LAWS)
+       ══════════════════════════════════════════════════════════ -->
+  <div id="sll" class="tab-panel">
+    <div class="sec-hd">Special &amp; local laws (SLL) — Motor Vehicles, NDPS, Arms, Environment &amp; others (Vol I–III)</div>
+
+    <div class="caution"><strong>Motor Vehicles Act — AP rate (87.5) exceeds national average (71.2)</strong>AP registered 46,726 MV Act cases in 2024 at a rate of 87.5 per lakh, compared to the national average of 71.2. This is driven by aggressive traffic enforcement but also reflects genuine road safety challenges requiring continued attention.</div>
+
+    <div class="mini-grid">
+      <div class="mini"><div class="mini-lbl">Motor Vehicles Act</div><div class="mini-val" style="color:var(--red)">46,726</div><div class="mini-sub bad">Rate 87.5 ✗ (Nat: 71.2)</div></div>
+      <div class="mini"><div class="mini-lbl">NDPS (Drugs)</div><div class="mini-val">1,823</div><div class="mini-sub">Cases 2024 (down from 2,027)</div></div>
+      <div class="mini"><div class="mini-lbl">SLL Total</div><div class="mini-val">1,68,788</div><div class="mini-sub">Rate 316.1 (Nat: 406.8) ✓</div></div>
+      <div class="mini"><div class="mini-lbl">SLL CSR</div><div class="mini-val" style="color:var(--teal)">90.7%</div><div class="mini-sub good">Above national 80.3% ✓</div></div>
+      <div class="mini"><div class="mini-lbl">Environment</div><div class="mini-val" style="color:var(--teal)">7</div><div class="mini-sub good">Very low (Nat avg: 57,670)</div></div>
+      <div class="mini"><div class="mini-lbl">Anti-Corruption</div><div class="mini-val" style="color:var(--teal)">139</div><div class="mini-sub good">CSR 99.4% ✓</div></div>
+      <div class="mini"><div class="mini-lbl">NDPS Trend</div><div class="mini-val">↓</div><div class="mini-sub good">2022: 2,315 → 2024: 1,823 ✓</div></div>
+      <div class="mini"><div class="mini-lbl">Gambling</div><div class="mini-val">—</div><div class="mini-sub">Data in SLL</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot red"></span>MV Act rate /lakh — AP vs states (2024)</div>
+        <div class="hbar-wrap" id="mv-st"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>SLL crime rate /lakh (combined IPC+SLL) — state comparison</div>
+        <div class="legend"><span class="leg"><span class="leg-sq" style="background:#1D9E75"></span>AP</span><span class="leg"><span class="leg-sq" style="background:#5DCAA5"></span>Better than AP</span><span class="leg"><span class="leg-sq" style="background:#F0997B"></span>Worse</span><span class="leg"><span class="leg-ln" style="background:#D85A30"></span>National</span></div>
+        <div class="hbar-wrap" id="sll-st"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>SLL sub-category table — AP 2024 (major laws)</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Special / Local Law</th><th>AP 2022</th><th>AP 2023</th><th>AP 2024</th><th>Rate 2024</th><th>National Rate</th><th>CSR 2024</th><th>Status</th></tr></thead>
+          <tbody id="sll-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 8 — STATE RANKINGS
+       ══════════════════════════════════════════════════════════ -->
+  <div id="ranking" class="tab-panel">
+    <div class="sec-hd">AP rank among 28 states — all crime parameters 2024 (rank 1 = best performing)</div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Comprehensive ranking across all major sub-categories</div>
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Crime Parameter</th><th>AP Value</th><th>Nat Avg</th><th>AP Rank (/28)</th><th>Better States</th><th>Status</th></tr></thead>
+          <tbody id="rank-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>States better than AP — IPC/BNS crime rate 2024</div>
+        <div class="hbar-wrap" id="better-ap"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot red"></span>AP areas above national average — rate comparison</div>
+        <div class="hbar-wrap" id="worse-ap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       TAB 9 — KEY FINDINGS
+       ══════════════════════════════════════════════════════════ -->
+  <div id="findings" class="tab-panel">
+    <div class="sec-hd">Key findings, analytical conclusions &amp; policy recommendations — NCRB 2024</div>
+
+    <div class="insight"><strong>1. Overall burden — AP significantly below national average</strong>AP's IPC/BNS crime rate (98.7) is 41.7% below the national average of 169.4. Combined IPC+SLL rate (316.1) is 22.3% below national (406.8). AP ranks 16th out of 28 states on IPC/BNS rate — better than the national median.</div>
+
+    <div class="insight"><strong>2. Chargesheeting rate — AP's standout strength (90.7% vs 80.3%)</strong>AP's chargesheeting rate of 90.7% exceeds the national average of 80.3% by 10.4 percentage points, placing AP among the top 5 states nationally. This demonstrates strong police investigation discipline and prosecution follow-through across all crime categories.</div>
+
+    <div class="insight"><strong>3. Crimes against women — mixed picture with critical concerns</strong>AP excels on rape (1.7 vs national 4.3), murder (1.7 vs 2.07), attempt to murder (2.9 vs 4.2), dowry deaths (72 cases), and stalking (0.3 vs 0.8). However, cruelty by husband (41.8 vs national 12.2 — 3.4x higher), voyeurism (3.7 vs 1.5), disrobing (11.1 vs 1.3 — 8.5x higher), insult to modesty (34.3 vs 17.3 — 2x), and acid attacks (5.8 vs 1.2 — 5x) are major areas of concern requiring urgent attention.</div>
+
+    <div class="concern"><strong>4. Acid attacks — most alarming sub-category (Rate 5.8 vs national 1.2)</strong>AP's acid attack rate of 5.8 per lakh (3,111 cases) is approximately 5 times the national average of 1.2 (national cases: 16,099). This is the single most alarming finding in the 2024 data and demands a dedicated investigation, fast-track prosecution under S.326A/B BNS, and victim support mechanism.</div>
+
+    <div class="concern"><strong>5. Cruelty by husband/relatives — 3.4x national average (Rate 41.8 vs 12.2)</strong>AP registered 17,480 cruelty by husband cases (S.85-86 BNS/498A IPC) against a national state average rate of 12.2. This could reflect both better reporting (positive) and genuine domestic violence prevalence. Domestic violence cells, shelter homes, and community awareness programmes need scaling up.</div>
+
+    <div class="concern"><strong>6. BNS transition surge — 73.2% jump in IPC cases needs contextual understanding</strong>IPC/BNS cases jumped from 30,426 (2023) to 52,712 (2024). A significant portion is attributable to Wrongful Restraint (S.126-127 BNS — 36,093 cases at 67.6 per lakh), a category newly made cognizable under BNS. This artificially inflates the rate and must be filtered when assessing genuine crime trends.</div>
+
+    <div class="insight"><strong>7. Motor Vehicles Act — above national (87.5 vs 71.2) but reflects enforcement rigour</strong>AP's MV Act rate (87.5 per lakh) exceeds the national average (71.2) with 46,726 cases in 2024. This partly reflects aggressive traffic enforcement, which is a positive indicator of road safety discipline. However, road accident deaths (7,915 cases under causing death by negligence at rate 14.8) warrant continued highway safety measures.</div>
+
+    <div class="insight"><strong>8. SC atrocities — below national but room for major improvement</strong>AP's SC atrocity rate (20.9 per lakh SC population, 1,765 cases) is below the national average of 24.7 but far higher than model states: West Bengal (0.4), Punjab (1.3), Jharkhand (4.4), and Himachal Pradesh (3.0). Strengthening SC/ST Courts, sensitisation training for police, and community-level monitoring are needed.</div>
+
+    <div class="insight"><strong>9. Cybercrime — low rate but very low chargesheeting rate (28.6%)</strong>AP's cybercrime rate of 4.7 per lakh (2,528 cases) is below the national average of 7.3, but the chargesheeting rate of only 28.6% (vs 31.9% nationally) is very low. Investment in dedicated cyber police stations, digital forensics labs, and trained cybercrime investigators is essential. Karnataka's 21,437 registrations reveal AP may have significant under-detection.</div>
+
+    <div class="insight"><strong>10. Human trafficking — AP excels (159 cases, 100% CSR)</strong>AP registered 159 human trafficking cases in 2024 with a remarkable 100% chargesheeting rate, indicating a well-functioning Anti-Human Trafficking Unit (AHTU) network. Rate of 0.3 per lakh is well-controlled.</div>
+
+    <div class="insight"><strong>11. Key benchmarking targets for AP 2025–26</strong>Based on comparable population and development profile: (a) Target Telangana (IPC rate 71.2) on overall crime control, (b) Target Tamil Nadu on rape rate (1.1), (c) Target West Bengal and Punjab on SC atrocity prevention (rates 0.4 and 1.3), (d) Target Karnataka on cybercrime detection infrastructure, (e) Target UP and Himachal on acid attack control (rates ~0.3–1.0).</div>
+  </div>
+
+  <div class="footer">
+    <p>Data: Crime in India 2024 (Volumes I, II &amp; III) — National Crime Records Bureau, Ministry of Home Affairs, Govt. of India.</p>
+    <p style="margin-top:3px">Crime rates are per lakh population. Rates for SC/ST crimes are per lakh SC/ST population. States/UTs may not be compared purely on the basis of crime figures. Population: Technical Group on Population Projections, July 2020.</p>
+  </div>
+</div>
+
+<script>
+/* ── TAB SWITCHER ── */
+function T(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.tab[onclick*="\''+id+'\'"]').classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+/* ── HBAR RENDERER ── */
+function hbar(id, data, max, natAvg){
+  const c=document.getElementById(id); if(!c)return;
+  c.innerHTML=data.map(d=>{
+    const pct=Math.min(100,Math.round((d.val/max)*100));
+    const np=natAvg?Math.min(100,Math.round((natAvg/max)*100)):0;
+    return `<div class="hbar-row">
+      <div class="hbar-label ${d.ap?'ap':d.nat?'nat':''}" title="${d.l}">${d.l}</div>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${pct}%;background:${d.c}"></div>
+        ${natAvg&&!d.nat?`<div class="nat-line" style="left:${np}%"></div>`:''}
+      </div>
+      <div class="hbar-val">${d.v!==undefined?d.v:d.val}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── PILL HTML ── */
+function pill(cls,txt){return`<span class="pill ${cls}">${txt}</span>`}
+function pct(ap,nat){
+  if(!nat||nat===0)return'–';
+  const d=((ap-nat)/nat*100);
+  return(d>0?'+':'')+d.toFixed(1)+'%';
+}
+
+/* ════════════════════════════════════════════════════════════
+   DATA
+   ════════════════════════════════════════════════════════════ */
+
+/* IPC all-state hbar */
+hbar('ipc-all',[
+  {l:'Manipur',val:21.8,c:'#5DCAA5'},{l:'Meghalaya',val:22.2,c:'#5DCAA5'},{l:'W.Bengal',val:22.9,c:'#5DCAA5'},
+  {l:'Tripura',val:24.8,c:'#5DCAA5'},{l:'Nagaland',val:26.1,c:'#5DCAA5'},{l:'Sikkim',val:26.4,c:'#5DCAA5'},
+  {l:'Assam',val:26.9,c:'#5DCAA5'},{l:'A.Pradesh',val:27.3,c:'#5DCAA5'},{l:'Jharkhand',val:34.3,c:'#5DCAA5'},
+  {l:'Mizoram',val:68.0,c:'#5DCAA5'},{l:'Punjab',val:68.7,c:'#5DCAA5'},{l:'Goa',val:74.2,c:'#5DCAA5'},
+  {l:'Telangana',val:71.2,c:'#5DCAA5'},{l:'Himachal',val:77.7,c:'#5DCAA5'},{l:'Karnataka',val:87.2,c:'#5DCAA5'},
+  {l:'Bihar',val:87.8,c:'#5DCAA5'},{l:'Odisha',val:92.0,c:'#5DCAA5'},
+  {l:'★ AP',val:98.7,c:'#1D9E75',ap:true},
+  {l:'Nat Avg',val:169.4,c:'#D85A30',nat:true},
+  {l:'Rajasthan',val:102.4,c:'#F0997B'},{l:'UP',val:116.3,c:'#F0997B'},
+  {l:'Uttarakhand',val:128.6,c:'#F0997B'},{l:'Chhattisgarh',val:137.9,c:'#F0997B'},
+  {l:'MP',val:172.8,c:'#F0997B'},{l:'Maharashtra',val:177.6,c:'#F0997B'},
+  {l:'Haryana',val:210.1,c:'#F0997B'},{l:'Tamil Nadu',val:399.9,c:'#F0997B'},
+  {l:'Gujarat',val:619.4,c:'#F0997B'},{l:'Kerala',val:875.9,c:'#F0997B'},
+],950,169.4);
+
+/* Summary matrix */
+const summaryData=[
+  ['IPC/BNS Crime Rate /lakh','52,712',98.7,169.4,'41.7% lower','good'],
+  ['Combined (IPC+SLL) Rate','1,68,788',316.1,406.8,'22.3% lower','good'],
+  ['Chargesheeting Rate (%)','—','90.7%','80.3%','10.4 pts higher','good'],
+  ['Rape (S.64-71 BNS/376 IPC)','441',1.7,4.3,'60% lower','good'],
+  ['Attempt to Rape','102',0.4,0.4,'On par','neu'],
+  ['Cruelty by Husband (S.85-86/498A)','17,480',41.8,12.2,'243% higher','bad'],
+  ['Insult to Modesty (S.79/509)','9,165',34.3,17.3,'98% higher','bad'],
+  ['Acid Attack (S.326A/B)','3,111',5.8,1.2,'383% higher','bad'],
+  ['Disrobing (S.76/354B)','2,956',11.1,1.3,'754% higher','bad'],
+  ['Voyeurism (S.77/354C)','977',3.7,1.5,'147% higher','bad'],
+  ['Dowry Deaths (S.80/304B)','72',0.2,0.7,'71% lower','good'],
+  ['Stalking (S.78/354D)','72',0.3,0.8,'63% lower','good'],
+  ['Murder (S.103/302)','898',1.7,2.07,'18% lower','good'],
+  ['Attempt to Murder (S.109/307)','1,523',2.9,4.2,'31% lower','good'],
+  ['Culpable Homicide','117',0.2,0.3,'lower','good'],
+  ['Total Hurt/Grievous Hurt','22,577',42.3,31.5,'34% higher','warn'],
+  ['Acid Attack (as Hurt sub-category)','3,111',5.8,1.2,'383% higher','bad'],
+  ['Kidnapping & Abduction','468',0.9,6.8,'87% lower','good'],
+  ['Robbery','244',0.5,'~1.5','67% lower','good'],
+  ['Dacoity','33',0.1,'~0.5','lower','good'],
+  ['Theft Total','12,022',22.5,'~30','lower','good'],
+  ['Burglary (Night)','18,283',34.2,'~28','higher','warn'],
+  ['Wrongful Restraint (S.126-127 BNS)','36,093',67.6,'new category','BNS new','neu'],
+  ['Forgery, Cheating & Fraud (FCF)','6,202',11.6,'~12','on par','neu'],
+  ['SC Atrocities','1,765',20.9,24.7,'15% lower','warn'],
+  ['ST Atrocities','653',12.4,16.3,'24% lower','good'],
+  ['Cybercrime','2,528',4.7,7.3,'36% lower','good'],
+  ['Motor Vehicles Act','46,726',87.5,71.2,'23% higher','warn'],
+  ['Human Trafficking','159',0.3,'~0.5','lower, 100% CSR','good'],
+  ['Prevention of Corruption','139',0.3,0.4,'lower, 99.4% CSR','good'],
+];
+const sb=document.getElementById('summary-tbody');
+sb.innerHTML=summaryData.map(r=>`<tr ${r[5]==='bad'?'style="background:#FEF4F0"':r[5]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td>${r[3]}</td><td>${r[4]}</td>
+  <td>${pill(r[5]==='bad'?'p-bad':r[5]==='good'?'p-good':r[5]==='warn'?'p-warn':'p-neu',
+    r[5]==='bad'?'⚠ Concern':r[5]==='good'?'✓ Better':r[5]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+/* Women hbars */
+hbar('women-bad',[
+  {l:'Cruelty/Husband',val:41.8,c:'#D85A30',ap:true,v:'41.8'},{l:'Nat avg',val:12.2,c:'#F0997B',nat:true,v:'12.2'},
+  {l:'Insult Modesty',val:34.3,c:'#D85A30',ap:true,v:'34.3'},{l:'Nat avg',val:17.3,c:'#F0997B',nat:true,v:'17.3'},
+  {l:'Disrobing',val:11.1,c:'#D85A30',ap:true,v:'11.1'},{l:'Nat avg',val:1.3,c:'#F0997B',nat:true,v:'1.3'},
+  {l:'Acid Attack',val:5.8,c:'#D85A30',ap:true,v:'5.8'},{l:'Nat avg',val:1.2,c:'#F0997B',nat:true,v:'1.2'},
+  {l:'Voyeurism',val:3.7,c:'#D85A30',ap:true,v:'3.7'},{l:'Nat avg',val:1.5,c:'#F0997B',nat:true,v:'1.5'},
+],45,null);
+
+hbar('women-good',[
+  {l:'Rape',val:1.7,c:'#1D9E75',ap:true,v:'1.7'},{l:'Nat avg',val:4.3,c:'#D85A30',nat:true,v:'4.3'},
+  {l:'Stalking',val:0.3,c:'#1D9E75',ap:true,v:'0.3'},{l:'Nat avg',val:0.8,c:'#D85A30',nat:true,v:'0.8'},
+  {l:'Dowry Deaths',val:0.2,c:'#1D9E75',ap:true,v:'0.2'},{l:'Nat avg',val:0.7,c:'#D85A30',nat:true,v:'0.7'},
+  {l:'Atmp. Rape',val:0.4,c:'#5DCAA5',ap:true,v:'0.4'},{l:'Nat avg',val:0.4,c:'#D85A30',nat:true,v:'0.4'},
+],6,null);
+
+/* Women detailed table */
+const womenData=[
+  ['Rape (S.64-71 BNS / 376 IPC)','441',1.7,4.3,'good'],
+  ['Rape of girls (<18 yrs)','393',0.9,'—','good'],
+  ['Rape of women (≥18 yrs)','48',0.2,'—','good'],
+  ['Attempt to Commit Rape','102',0.4,0.4,'neu'],
+  ['Sexual Intercourse by Deceit (S.69 BNS)','2,389',8.9,7.1,'warn'],
+  ['Disclosure of Identity of Victim (S.72 BNS)','843',3.2,2.3,'warn'],
+  ['Assault on Woman to Outrage Modesty (S.74/354)','12',0.0,0.1,'good'],
+  ['Sexual Harassment — Office Premises (S.75/354A)','7',0.0,0.1,'good'],
+  ['Sexual Harassment — Work Premises','60',0.2,0.2,'neu'],
+  ['Sexual Harassment — Public Transport','65',0.2,0.0,'warn'],
+  ['Sexual Harassment — Public Places/Pathway','673',2.5,1.9,'warn'],
+  ['Sexual Harassment — Shelter Homes','189',0.7,1.2,'good'],
+  ['Sexual Harassment — Any Other Place','134',0.5,0.3,'warn'],
+  ['Disrobing (S.76 BNS/354B IPC)','2,956',11.1,1.3,'bad'],
+  ['Voyeurism (S.77 BNS/354C IPC)','977',3.7,1.5,'bad'],
+  ['Stalking (S.78 BNS/354D IPC)','72',0.3,0.8,'good'],
+  ['Insult to Modesty of Women (S.79 BNS/509 IPC)','9,165',34.3,17.3,'bad'],
+  ['Dowry Death (S.80 BNS/304B IPC)','72',0.2,0.7,'good'],
+  ['Abetment of Suicide of Women (S.108/306)','6',0.0,0.0,'neu'],
+  ['Kidnapping of Women (S.137-138/363 IPC)','418',0.8,3.8,'good'],
+  ['Importation of Girls (S.141/366B)','37',0.1,0.1,'neu'],
+  ['Selling of Child for Prostitution (S.98/372)','5',0.0,0.0,'neu'],
+  ['Cruelty by Husband/Relatives (S.85-86/498A)','17,480',41.8,12.2,'bad'],
+  ['Acid Attack (S.326A/326B BNS)','3,111',5.8,1.2,'bad'],
+];
+const wb=document.getElementById('women-tbody');
+wb.innerHTML=womenData.map(r=>`<tr ${r[4]==='bad'?'style="background:#FEF4F0"':r[4]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td>${r[3]}</td>
+  <td>${typeof r[2]==='number'&&typeof r[3]==='number'?pct(r[2],r[3]):'—'}</td>
+  <td>${pill(r[4]==='bad'?'p-bad':r[4]==='good'?'p-good':r[4]==='warn'?'p-warn':'p-neu',
+    r[4]==='bad'?'⚠ Above Nat':r[4]==='good'?'✓ Below Nat':r[4]==='warn'?'Slightly High':'Neutral')}</td>
+</tr>`).join('');
+
+/* Rape states */
+hbar('rape-states',[
+  {l:'Tamil Nadu',val:1.1,c:'#5DCAA5'},{l:'Nagaland',val:1.3,c:'#5DCAA5'},
+  {l:'★ AP',val:1.7,c:'#1D9E75',ap:true},{l:'Gujarat',val:1.9,c:'#5DCAA5'},
+  {l:'Bihar',val:1.9,c:'#5DCAA5'},{l:'Karnataka',val:2.0,c:'#5DCAA5'},
+  {l:'W.Bengal',val:2.0,c:'#5DCAA5'},{l:'Nat Avg',val:4.3,c:'#D85A30',nat:true},
+  {l:'Telangana',val:6.0,c:'#F0997B'},{l:'Odisha',val:5.5,c:'#F0997B'},
+  {l:'Haryana',val:9.6,c:'#F0997B'},{l:'Rajasthan',val:12.2,c:'#F0997B'},
+],14,4.3);
+
+/* Violent crime pie */
+new Chart(document.getElementById('vc-pie'),{
+  type:'doughnut',
+  data:{
+    labels:['Hurt/Grievous Hurt (22,577)','Atmp. Murder (1,523)','Murder (898)','Acid Attacks (3,111)','Arson (507)','Kidnapping (468)','Rioting (447)','Robbery (244)','Dacoity (33)'],
+    datasets:[{data:[22577,1523,898,3111,507,468,447,244,33],
+      backgroundColor:['#1D9E75','#D85A30','#8B0000','#BA7517','#534AB7','#378ADD','#F0997B','#5DCAA5','#888780'],
+      borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+    plugins:{legend:{position:'right',labels:{font:{size:9.5},boxWidth:10,padding:6}},
+    tooltip:{callbacks:{label:ctx=>' '+ctx.label}}}}
+});
+
+/* Murder states */
+hbar('murder-st',[
+  {l:'Mizoram',val:0.3,c:'#5DCAA5'},{l:'Manipur',val:0.5,c:'#5DCAA5'},
+  {l:'Himachal',val:1.1,c:'#5DCAA5'},{l:'Gujarat',val:1.4,c:'#5DCAA5'},
+  {l:'UP',val:1.3,c:'#5DCAA5'},
+  {l:'★ AP',val:1.7,c:'#1D9E75',ap:true},
+  {l:'Karnataka',val:1.8,c:'#5DCAA5'},{l:'Nat Avg',val:2.07,c:'#D85A30',nat:true},
+  {l:'Tamil Nadu',val:2.0,c:'#5DCAA5'},{l:'Bihar',val:2.2,c:'#F0997B'},
+  {l:'Punjab',val:2.5,c:'#F0997B'},{l:'Telangana',val:2.7,c:'#F0997B'},
+  {l:'Jharkhand',val:3.7,c:'#F0997B'},{l:'Assam',val:5.2,c:'#F0997B'},
+],6,2.07);
+
+/* Violent table */
+const violentData=[
+  ['Murder (S.103(1) BNS/302 IPC)','898',1.7,2.07,'good'],
+  ['Murder by Life Convict (S.104 BNS)','0',0.0,'—','good'],
+  ['Culpable Homicide not amounting to Murder (S.105/304)','117',0.2,0.3,'good'],
+  ['Attempt to Commit Murder (S.109 BNS/307 IPC)','1,523',2.9,4.2,'good'],
+  ['Attempt to Culpable Homicide (S.110/308)','12',0.0,0.0,'neu'],
+  ['Organised Crime (S.111 BNS)','343',0.6,0.1,'warn'],
+  ['Causing Death by Negligence — Road Accidents (Total)','7,915',14.8,'~9','bad'],
+  ['  — Hit and Run','701',1.3,'~1','neu'],
+  ['  — Other Accidents','6,982',13.1,'~8','bad'],
+  ['  — Medical Negligence Deaths','176',0.3,'~0.2','neu'],
+  ['Total Hurt (Simple + Grievous)','22,577',42.3,31.5,'bad'],
+  ['Grievous Hurt (S.117 BNS/325 IPC)','10,831',20.3,13.5,'bad'],
+  ['Simple Hurt (pre-BNS)','9,438',17.7,11.8,'bad'],
+  ['Hurt by Dangerous Weapons (S.117(4) BNS)','8,025',15.0,'~10','bad'],
+  ['Grievous Hurt by Dangerous Weapons','296',0.6,0.5,'neu'],
+  ['Acid Attack — Hurt (S.326A/B BNS)','3,111',5.8,1.2,'bad'],
+  ['Wrongful Restraint & Confinement (S.126-127 BNS)','36,093',67.6,'new category','neu'],
+  ['Kidnapping & Abduction — Total (S.137-142/363-369)','468',0.9,6.8,'good'],
+  ['Kidnapping for Ransom','29',0.1,0.3,'good'],
+  ['K&A of Children','119',0.2,0.6,'good'],
+  ['Rioting Total (S.189-191 BNS/143-145 IPC)','447',0.8,2.0,'good'],
+  ['  — Caste Conflict','1',0.0,'—','good'],
+  ['  — Communal/Religious','2',0.0,'—','good'],
+  ['Robbery (S.309/311 BNS/392 IPC)','244',0.5,'~1.5','good'],
+  ['Dacoity (S.310 BNS/395 IPC)','33',0.1,'~0.5','good'],
+  ['Arson (S.326(f)/327(2) BNS/435-438 IPC)','507',0.9,0.5,'warn'],
+];
+const vb=document.getElementById('violent-tbody');
+vb.innerHTML=violentData.map(r=>`<tr ${r[4]==='bad'?'style="background:#FEF4F0"':r[4]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td>${r[3]}</td>
+  <td>${typeof r[2]==='number'&&typeof r[3]==='number'?pct(r[2],r[3]):'—'}</td>
+  <td>${pill(r[4]==='bad'?'p-bad':r[4]==='good'?'p-good':r[4]==='warn'?'p-warn':'p-neu',
+    r[4]==='bad'?'⚠ Concern':r[4]==='good'?'✓ Better':r[4]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+/* Atm states */
+hbar('atm-states',[
+  {l:'Gujarat',val:1.2,c:'#5DCAA5'},{l:'W.Bengal',val:1.4,c:'#5DCAA5'},{l:'Karnataka',val:1.8,c:'#5DCAA5'},
+  {l:'Tamil Nadu',val:2.2,c:'#5DCAA5'},{l:'★ AP',val:2.9,c:'#1D9E75',ap:true},
+  {l:'Nat Avg',val:4.2,c:'#D85A30',nat:true},{l:'Haryana',val:6.5,c:'#F0997B'},
+  {l:'Bihar',val:8.0,c:'#F0997B'},{l:'Rajasthan',val:7.2,c:'#F0997B'},{l:'Odisha',val:11.0,c:'#F0997B'},
+],12,4.2);
+
+/* Property hbars */
+hbar('prop-cmp',[
+  {l:'AP — Robbery',val:0.5,c:'#1D9E75',ap:true,v:'0.5'},{l:'Nat — Robbery',val:1.5,c:'#D85A30',nat:true,v:'1.5'},
+  {l:'AP — Dacoity',val:0.1,c:'#1D9E75',ap:true,v:'0.1'},{l:'Nat — Dacoity',val:0.5,c:'#D85A30',nat:true,v:'0.5'},
+  {l:'AP — Theft',val:22.5,c:'#1D9E75',ap:true,v:'22.5'},{l:'Nat — Theft',val:30.0,c:'#D85A30',nat:true,v:'~30'},
+  {l:'AP — Snatching',val:0.8,c:'#1D9E75',ap:true,v:'0.8'},{l:'Nat — Snatching',val:1.2,c:'#D85A30',nat:true,v:'~1.2'},
+  {l:'AP — Night Burg.',val:34.2,c:'#F0997B',ap:true,v:'34.2'},{l:'Nat — Night Burg.',val:28.0,c:'#D85A30',nat:true,v:'~28'},
+],40,null);
+
+hbar('robbery-st',[
+  {l:'AP ★',val:244,c:'#1D9E75',ap:true},{l:'Punjab',val:224,c:'#5DCAA5'},
+  {l:'Tamil Nadu',val:480,c:'#F0997B'},{l:'Telangana',val:758,c:'#F0997B'},
+  {l:'Jharkhand',val:438,c:'#F0997B'},{l:'Karnataka',val:1567,c:'#F0997B'},
+  {l:'UP',val:1163,c:'#F0997B'},{l:'Rajasthan',val:1800,c:'#F0997B'},
+  {l:'Maharashtra',val:4731,c:'#F0997B'},
+],5000,null);
+
+const propertyData=[
+  ['Theft Total (S.303,305-307 BNS/379-382 IPC)','12,022',22.5,'~30','good'],
+  ['  — Vehicle Theft (S.305(b) BNS)','597',1.1,'~2','good'],
+  ['  — Theft by Servant (S.306 BNS)','479',0.9,'~1','good'],
+  ['  — Auto Theft','21',0.0,'—','good'],
+  ['Snatching (S.304 BNS)','424',0.8,'~1.2','good'],
+  ['Robbery (S.309/311 BNS/392 IPC)','244',0.5,'~1.5','good'],
+  ['Dacoity (S.310/311 BNS/395 IPC)','33',0.1,'~0.5','good'],
+  ['Extortion (S.308 BNS/384-389 IPC)','33',0.1,'~0.3','good'],
+  ['Day Burglary (S.331 BNS)','3,231',6.1,'~8','good'],
+  ['Night Burglary (S.331 BNS)','18,283',34.2,'~28','warn'],
+  ['Criminal Misappropriation (S.316/403-404)','953',1.8,'~2','good'],
+  ['Receiving Stolen Property (S.317/411-414)','4,061',7.6,'~5','warn'],
+  ['Wrongful Restraint (S.126-127 BNS)','36,093',67.6,'New BNS cat.','neu'],
+  ['Wrongful Confinement (S.127 BNS)','410',0.8,'—','neu'],
+  ['Criminal Breach of Trust (S.316/405-409)','953',1.8,'~2','good'],
+  ['Forgery, Cheating & Fraud — Total','6,202',11.6,'~12','neu'],
+  ['  — Bank Fraud','221',0.4,'—','neu'],
+  ['  — Other FCF','4,368',8.2,'—','neu'],
+  ['Counterfeiting','14',0.0,'—','good'],
+  ['Affray (S.194 BNS)','1,829',3.4,'~5','good'],
+  ['Election Offences','538',1.0,'—','neu'],
+  ['Harboring Offenders (S.213 BNS/212-216 IPC)','13,958',26.1,'—','neu'],
+  ['Public Nuisance/Obstruction (S.285 BNS)','1,758',3.3,'—','neu'],
+];
+const pb=document.getElementById('property-tbody');
+pb.innerHTML=propertyData.map(r=>`<tr ${r[4]==='bad'?'style="background:#FEF4F0"':r[4]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td>${r[3]}</td>
+  <td>${typeof r[2]==='number'&&typeof r[3]==='number'?pct(r[2],r[3]):'—'}</td>
+  <td>${pill(r[4]==='bad'?'p-bad':r[4]==='good'?'p-good':r[4]==='warn'?'p-warn':'p-neu',
+    r[4]==='bad'?'⚠ Concern':r[4]==='good'?'✓ Better':r[4]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+/* Cyber states */
+hbar('cyber-st',[
+  {l:'Chhattisgarh',val:0.3,c:'#5DCAA5'},{l:'Sikkim',val:1.7,c:'#5DCAA5'},{l:'Tripura',val:0.5,c:'#5DCAA5'},
+  {l:'★ AP',val:4.7,c:'#1D9E75',ap:true},{l:'Nat Avg',val:7.3,c:'#D85A30',nat:true},
+  {l:'Tamil Nadu',val:24.4,c:'#F0997B'},{l:'UP',val:28.5,c:'#F0997B'},
+  {l:'Telangana',val:3.1,c:'#5DCAA5'},{l:'Karnataka',val:314,c:'#F0997B',v:'314'},
+  {l:'Jharkhand',val:311,c:'#F0997B',v:'311'},
+],80,7.3);
+
+new Chart(document.getElementById('eco-pie'),{
+  type:'bar',
+  data:{
+    labels:['Forgery/Cheating/Fraud','Crim. Breach Trust','Counterfeiting','Other'],
+    datasets:[{data:[6202,953,15,0],backgroundColor:['#1D9E75','#378ADD','#D85A30','#888780'],borderRadius:4}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+    plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'}},y:{grid:{display:false}}}}
+});
+
+const ecoData=[
+  ['Total Economic Offences (IPC+BNS)','7,170',13.4,15.3,'good'],
+  ['Forgery, Cheating & Fraud (FCF) Total','6,202',11.6,'~12','good'],
+  ['  — Bank Fraud Sub-category','221',0.4,'—','neu'],
+  ['  — Insurance Fraud','132',0.2,'—','neu'],
+  ['  — Other Frauds (S.316/417-420)','4,368',8.2,'—','neu'],
+  ['Criminal Breach of Trust (S.316/405-409)','953',1.8,'~2','good'],
+  ['Counterfeiting Currency (S.178-181 BNS)','14',0.0,'—','good'],
+  ['Total Cybercrime (IT Act + IPC/BNS)','2,528',4.7,7.3,'good'],
+  ['  — Computer Related Offences (S.66 IT Act)','306',0.6,'~2.6','good'],
+  ['  — Ransomware','0',0.0,'—','good'],
+  ['  — Identity Theft (S.66C)','0',0.0,'—','good'],
+  ['  — Social Media Crimes','68',0.1,'~0.3','good'],
+  ['  — Financial Fraud Online','147',0.3,'—','neu'],
+  ['  — Other Cybercrimes','2,007',3.8,'—','neu'],
+  ['Cybercrime Chargesheeting Rate','—','28.6%','31.9%','warn'],
+  ['Prevention of Corruption Act','139',0.3,0.4,'good'],
+  ['  — Trap Cases','80',0.1,'—','good'],
+  ['  — Criminal Misconduct','62',0.1,'—','neu'],
+  ['PC Act Chargesheeting Rate','—','99.4%','80.5%','good'],
+];
+const eb=document.getElementById('eco-tbody');
+eb.innerHTML=ecoData.map(r=>`<tr ${r[4]==='bad'?'style="background:#FEF4F0"':r[4]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td>${r[3]}</td>
+  <td>${typeof r[2]==='number'&&typeof r[3]==='number'?pct(r[2],r[3]):'—'}</td>
+  <td>${pill(r[4]==='bad'?'p-bad':r[4]==='good'?'p-good':r[4]==='warn'?'p-warn':'p-neu',
+    r[4]==='bad'?'⚠ Concern':r[4]==='good'?'✓ Better':r[4]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+/* SC states */
+hbar('sc-st',[
+  {l:'Assam',val:0.1,c:'#5DCAA5'},{l:'W.Bengal',val:0.4,c:'#5DCAA5'},{l:'Punjab',val:1.3,c:'#5DCAA5'},
+  {l:'Himachal',val:3.0,c:'#5DCAA5'},{l:'Jharkhand',val:4.4,c:'#5DCAA5'},{l:'Tamil Nadu',val:11.9,c:'#5DCAA5'},
+  {l:'Karnataka',val:19.0,c:'#5DCAA5'},{l:'Haryana',val:20.0,c:'#85B7EB'},
+  {l:'★ AP',val:20.9,c:'#1D9E75',ap:true},{l:'National',val:24.7,c:'#D85A30',nat:true},
+  {l:'Maharashtra',val:21.4,c:'#F0997B'},{l:'Telangana',val:36.8,c:'#F0997B'},
+  {l:'Odisha',val:37.6,c:'#F0997B'},{l:'Rajasthan',val:36.0,c:'#F0997B'},
+  {l:'Bihar',val:45.6,c:'#F0997B'},{l:'MP',val:68.5,c:'#F0997B'},
+],80,24.7);
+
+hbar('juv-st',[
+  {l:'Tripura',val:2.4,c:'#5DCAA5'},{l:'Uttarakhand',val:3.5,c:'#5DCAA5'},
+  {l:'★ AP',val:4.8,c:'#1D9E75',ap:true},{l:'Nat Avg',val:7.9,c:'#D85A30',nat:true},
+  {l:'Karnataka',val:8.5,c:'#F0997B'},{l:'MP',val:12.4,c:'#F0997B'},
+  {l:'Maharashtra',val:11.2,c:'#F0997B'},{l:'Rajasthan',val:15.3,c:'#F0997B'},
+],20,7.9);
+
+const vulnData=[
+  ['SC Atrocities (SC/ST PoA Act + IPC/BNS)','1,765',20.9,24.7,'warn'],
+  ['  — Murder of SC victims','83',1.0,1.3,'good'],
+  ['  — Rape of SC women','78',0.9,0.8,'warn'],
+  ['  — Grievous Hurt on SC','95',1.5,1.1,'warn'],
+  ['  — K&A of SC persons','31',0.4,0.3,'neu'],
+  ['  — Assault on SC women','31',0.4,0.2,'warn'],
+  ['ST Atrocities (SC/ST PoA Act + IPC/BNS)','653',12.4,16.3,'good'],
+  ['  — Murder of ST victims','32',0.6,1.2,'good'],
+  ['  — Rape of ST women','25',0.3,1.3,'good'],
+  ['Crimes against Senior Citizens (Total)','2,090',48.3,31.4,'bad'],
+  ['  — Senior Citizen FCF crimes','372',8.6,'~4','bad'],
+  ['  — Theft against seniors','187',4.3,'—','neu'],
+  ['  — Assault on senior women','61',1.3,'~1.2','neu'],
+  ['Senior Citizen CSR','—','86.4%','74.4%','good'],
+  ['Crimes against Children (Total IPC+BNS+SLL)','significant','—','—','neu'],
+  ['  — Rape of children','small',0.0,'—','good'],
+  ['  — POCSO Act cases','significant','—','—','neu'],
+  ['Juveniles in Conflict with Law','912',4.8,7.9,'good'],
+  ['Human Trafficking (Total)','159',0.3,'~0.5','good'],
+  ['Human Trafficking CSR','—','100%','~80%','good'],
+  ['Missing Persons (reported)','significant','—','—','neu'],
+];
+const vb2=document.getElementById('vuln-tbody');
+vb2.innerHTML=vulnData.map(r=>`<tr ${r[4]==='bad'?'style="background:#FEF4F0"':r[4]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td>${r[3]}</td>
+  <td>${typeof r[2]==='number'&&typeof r[3]==='number'?pct(r[2],r[3]):'—'}</td>
+  <td>${pill(r[4]==='bad'?'p-bad':r[4]==='good'?'p-good':r[4]==='warn'?'p-warn':'p-neu',
+    r[4]==='bad'?'⚠ Concern':r[4]==='good'?'✓ Better':r[4]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+/* MV states */
+hbar('mv-st',[
+  {l:'Mizoram',val:18.4,c:'#5DCAA5'},{l:'Bihar',val:22.1,c:'#5DCAA5'},{l:'Jharkhand',val:30.2,c:'#5DCAA5'},
+  {l:'W.Bengal',val:45.3,c:'#5DCAA5'},{l:'Karnataka',val:52.0,c:'#5DCAA5'},
+  {l:'Nat Avg',val:71.2,c:'#D85A30',nat:true},{l:'Tamil Nadu',val:65.0,c:'#5DCAA5'},
+  {l:'★ AP',val:87.5,c:'#D85A30',nat:true},{l:'Haryana',val:95.4,c:'#F0997B'},
+  {l:'Gujarat',val:138.0,c:'#F0997B'},{l:'Kerala',val:422.0,c:'#F0997B'},
+],450,71.2);
+
+hbar('sll-st',[
+  {l:'Manipur',val:162.1,c:'#5DCAA5'},{l:'Tripura',val:96.2,c:'#5DCAA5'},{l:'Meghalaya',val:117.7,c:'#5DCAA5'},
+  {l:'Jharkhand',val:152.0,c:'#5DCAA5'},{l:'W.Bengal',val:181.3,c:'#5DCAA5'},
+  {l:'Arunachal',val:184.2,c:'#5DCAA5'},{l:'Bihar',val:272.6,c:'#5DCAA5'},
+  {l:'Karnataka',val:290.6,c:'#5DCAA5'},{l:'★ AP',val:316.1,c:'#1D9E75',ap:true},
+  {l:'Nat Avg',val:406.8,c:'#D85A30',nat:true},{l:'Rajasthan',val:362.0,c:'#5DCAA5'},
+  {l:'Telangana',val:568.9,c:'#F0997B'},{l:'Haryana',val:578.6,c:'#F0997B'},
+  {l:'Tamil Nadu',val:655.4,c:'#F0997B'},{l:'Kerala',val:1389.0,c:'#F0997B'},
+],1450,406.8);
+
+const sllData=[
+  ['Motor Vehicles Act (SLL)','15,881','21,811','46,726',87.5,71.2,'91.3%','warn'],
+  ['NDPS (Narcotic Drugs & Psychotropic Substances)','2,315','2,027','1,823','~3.4','~5.5','81.5%','good'],
+  ['Arms Act (SLL)','—','—','significant','—','—','—','neu'],
+  ['Prevention of Corruption Act','134','74','139',0.3,0.4,'99.4%','good'],
+  ['Environment Related Offences','1,294','47','7','~0.0','~4.1','91.3%','good'],
+  ['Human Trafficking (IPC+BNS+SLL)','163','120','159',0.3,'~0.5','100%','good'],
+  ['Gambling Acts (SLL)','—','—','—','—','—','—','neu'],
+  ['Immoral Traffic (Prevention) Act','—','—','significant','—','—','—','neu'],
+  ['Crime in Railways (GRP)','significant','—','significant','—','—','—','neu'],
+];
+const sb2=document.getElementById('sll-tbody');
+sb2.innerHTML=sllData.map(r=>`<tr ${r[7]==='bad'?'style="background:#FEF4F0"':r[7]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td>
+  <td><strong>${r[4]}</strong></td><td>${r[5]}</td><td>${r[6]}</td>
+  <td>${pill(r[7]==='bad'?'p-bad':r[7]==='good'?'p-good':r[7]==='warn'?'p-warn':'p-neu',
+    r[7]==='bad'?'⚠ Concern':r[7]==='good'?'✓ Better':r[7]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+/* Rankings */
+const rankData=[
+  ['IPC/BNS Crime Rate','98.7','169.4','16/28','15','good'],
+  ['Combined Crime Rate','316.1','406.8','14/28','13','good'],
+  ['Chargesheeting Rate','90.7%','80.3%','5/28 ↑','4 better','good'],
+  ['Rape Rate','1.7','4.3','3/28','2','good'],
+  ['Violent Crime Rate','51.4','52.9','14/28','13','good'],
+  ['Murder Rate','1.68','~2.07','10/28','9','good'],
+  ['Attempt to Murder Rate','2.9','4.2','8/28','7','good'],
+  ['Kidnapping Rate','0.9','6.8','5/28','4','good'],
+  ['Robbery Rate','0.5','~1.5','4/28','3','good'],
+  ['Dacoity Rate','0.1','~0.5','4/28','3','good'],
+  ['Dowry Deaths Rate','0.2','0.7','6/28','5','good'],
+  ['Stalking Rate','0.3','0.8','8/28','7','good'],
+  ['Cruelty by Husband Rate','41.8','12.2','25/28','2','bad'],
+  ['Acid Attack Rate','5.8','1.2','26/28','1','bad'],
+  ['Disrobing Rate','11.1','1.3','27/28','1','bad'],
+  ['Voyeurism Rate','3.7','1.5','23/28','3','bad'],
+  ['Insult to Modesty Rate','34.3','17.3','22/28','5','bad'],
+  ['SC Atrocity Rate','20.9','24.7','14/28','14','warn'],
+  ['Motor Vehicles Act Rate','87.5','71.2','19/28','8','warn'],
+  ['Cybercrime Rate','4.7','7.3','8/28','20 states higher','good'],
+  ['Human Trafficking CSR','100%','~80%','1/28','—','good'],
+  ['PC Act CSR','99.4%','80.5%','3/28','2','good'],
+  ['Senior Citizen Crime Rate','48.3','31.4','22/28','—','warn'],
+];
+const rb=document.getElementById('rank-tbody');
+rb.innerHTML=rankData.map(r=>`<tr ${r[5]==='bad'?'style="background:#FEF4F0"':r[5]==='good'?'class="ap-row"':''}>
+  <td>${r[0]}</td><td><strong>${r[1]}</strong></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td>
+  <td>${pill(r[5]==='bad'?'p-bad':r[5]==='good'?'p-good':r[5]==='warn'?'p-warn':'p-neu',
+    r[5]==='bad'?'⚠ Concern':r[5]==='good'?'✓ Better':r[5]==='warn'?'Watch':'Neutral')}</td>
+</tr>`).join('');
+
+hbar('better-ap',[
+  {l:'Manipur',val:21.8,c:'#5DCAA5'},{l:'Meghalaya',val:22.2,c:'#5DCAA5'},{l:'W.Bengal',val:22.9,c:'#5DCAA5'},
+  {l:'Tripura',val:24.8,c:'#5DCAA5'},{l:'Nagaland',val:26.1,c:'#5DCAA5'},{l:'Sikkim',val:26.4,c:'#5DCAA5'},
+  {l:'Assam',val:26.9,c:'#5DCAA5'},{l:'A.Pradesh',val:27.3,c:'#5DCAA5'},{l:'Jharkhand',val:34.3,c:'#5DCAA5'},
+  {l:'Mizoram',val:68.0,c:'#5DCAA5'},{l:'Punjab',val:68.7,c:'#5DCAA5'},{l:'Goa',val:74.2,c:'#5DCAA5'},
+  {l:'Telangana',val:71.2,c:'#5DCAA5'},{l:'Himachal',val:77.7,c:'#5DCAA5'},{l:'Karnataka',val:87.2,c:'#5DCAA5'},
+  {l:'Bihar',val:87.8,c:'#5DCAA5'},{l:'Odisha',val:92.0,c:'#5DCAA5'},{l:'★ AP',val:98.7,c:'#1D9E75',ap:true},
+],110,null);
+
+hbar('worse-ap',[
+  {l:'Cruelty/Hus.(AP)',val:41.8,c:'#D85A30',ap:true,v:'41.8'},{l:'National avg',val:12.2,c:'rgba(0,0,0,0.2)',nat:true,v:'12.2'},
+  {l:'Disrobing (AP)',val:11.1,c:'#D85A30',ap:true,v:'11.1'},{l:'National avg',val:1.3,c:'rgba(0,0,0,0.2)',nat:true,v:'1.3'},
+  {l:'Acid Attack (AP)',val:5.8,c:'#D85A30',ap:true,v:'5.8'},{l:'National avg',val:1.2,c:'rgba(0,0,0,0.2)',nat:true,v:'1.2'},
+  {l:'Voyeurism (AP)',val:3.7,c:'#D85A30',ap:true,v:'3.7'},{l:'National avg',val:1.5,c:'rgba(0,0,0,0.2)',nat:true,v:'1.5'},
+  {l:'MV Act (AP)',val:87.5,c:'#BA7517',ap:true,v:'87.5'},{l:'National avg',val:71.2,c:'rgba(0,0,0,0.2)',nat:true,v:'71.2'},
+],100,null);
+
+/* CHARTS */
+new Chart(document.getElementById('radar1'),{
+  type:'radar',
+  data:{
+    labels:['IPC Rate\n(inv)','Chargesheeting','Rape Rate\n(inv)','Violent\n(inv)','Murder\n(inv)','Kidnap\n(inv)','Robbery\n(inv)','SC Atrocity\n(inv)'],
+    datasets:[
+      {label:'Andhra Pradesh',data:[86,91,89,97,81,93,95,85],fill:true,backgroundColor:'rgba(29,158,117,0.18)',borderColor:'#1D9E75',borderWidth:2,pointBackgroundColor:'#1D9E75',pointRadius:4},
+      {label:'National Average',data:[50,80,50,50,50,50,50,50],fill:true,backgroundColor:'rgba(216,90,48,0.1)',borderColor:'#D85A30',borderWidth:2,borderDash:[4,3],pointBackgroundColor:'#D85A30',pointRadius:3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}},
+    scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},backdropColor:'transparent'},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:9}}}}}
+});
+
+new Chart(document.getElementById('trend1'),{
+  type:'bar',
+  data:{
+    labels:['2022','2023','2024'],
+    datasets:[{label:'IPC/BNS Cases',data:[36737,30426,52712],backgroundColor:['#9FE1CB','#9FE1CB','#1D9E75'],borderRadius:5}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y.toLocaleString()+' cases'}}},
+    scales:{y:{beginAtZero:false,min:25000,grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:v=>v.toLocaleString()}},x:{grid:{display:false}}}}
+});
+</script>
+</body>
+</html>
